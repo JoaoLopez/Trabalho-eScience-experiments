@@ -1,3 +1,3 @@
-# scientific-experimentation-and-evaluation
-this repo contains the report for the scientific experimentation and evaluation laboratory and the relevant code file
+this repo contains the details for the experimentation and evaluation along with the relevant code files.
+
 
