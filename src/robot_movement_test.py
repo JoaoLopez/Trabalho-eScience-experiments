@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import os
 
 iteration = np.linspace(1, 20, 20)
 iteration = iteration[np.newaxis, :]
@@ -44,7 +45,9 @@ def plotValues(qty1, qty2, title, xlabel, ylabel, filename):
     plt.grid()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig(filename)
+    # path = desired path
+
+    plt.savefig(path + filename)
 
 
 def finalPlot(finaltitle, filename,
@@ -74,7 +77,8 @@ def finalPlot(finaltitle, filename,
     plt.ylabel('cms')
     plt.legend()
     plt.grid()
-    plt.savefig(filename)
+    # path = desired path
+    plt.savefig(path + filename)
 
 
 def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
@@ -90,9 +94,10 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
         X_final_pose_straight = np.divide(x_left_coordinates + x_right_coordinates, 2)
         Y_final_pose_straight = np.divide(y_left_coordinates + y_right_coordinates, 2)
 
-        slope_coordinate_wheel_straight = [x/y for x, y in zip((y_right_coordinates - y_left_coordinates), (x_right_coordinates - x_left_coordinates))]
+        slope_coordinate_wheel_straight = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                                 (x_right_coordinates - x_left_coordinates))]
 
-        arctan_Values_straight = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_straight))) + np.rad2deg(np.pi/2)
+        arctan_Values_straight = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_straight))) + np.rad2deg(np.pi / 2)
 
         plotValues(arctan_Values_straight, iteration,
                    'Variation of robot heading for Straight motion test',
@@ -107,6 +112,7 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
                   Y_final_pose_straight,
                   x_right_coordinates,
                   y_right_coordinates)
+        return X_final_pose_straight, Y_final_pose_straight
 
     elif pose == 'left':
         X_final_pose_left = np.divide(x_left_coordinates + x_right_coordinates, 2)
@@ -129,6 +135,7 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
                   Y_final_pose_left,
                   x_right_coordinates,
                   y_right_coordinates)
+        return X_final_pose_left, Y_final_pose_left
 
     elif pose == 'right':
         X_final_pose_right = np.divide(x_left_coordinates + x_right_coordinates, 2)
@@ -141,10 +148,10 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
 
         for i in range(len(arctan_Values_right)):
             if arctan_Values_right[i] < 0:
-                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) + np.rad2deg(np.pi/2)
+                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) + np.rad2deg(np.pi / 2)
 
             elif (arctan_Values_right[i]) > 0:
-                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) - np.rad2deg(np.pi/2)
+                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) - np.rad2deg(np.pi / 2)
 
         plotValues(arctan_Values_right, iteration,
                    'Variation of robot heading for Right motion test',
@@ -159,6 +166,34 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
                   Y_final_pose_right,
                   x_right_coordinates,
                   y_right_coordinates)
+        return X_final_pose_right, Y_final_pose_right
+
+
+def finalVisualization(x_left_wheel_right, y_left_wheel_right, x_left_wheel_left, y_left_wheel_left,
+                       x_left_wheel_straight, y_left_wheel_straight,
+                       x_right_wheel_right, y_right_wheel_right, x_right_wheel_left, y_right_wheel_left,
+                       x_right_wheel_straight, y_right_wheel_straight,
+                       x_center_right, y_center_right, x_center_left, y_center_left,
+                       x_center_straight, y_center_straight):
+    X_right_wheel = np.hstack(
+        (x_right_wheel_right, x_right_wheel_left, x_right_wheel_straight))
+    Y_right_wheel = np.hstack(
+        (y_right_wheel_right, y_right_wheel_left, y_right_wheel_straight))
+
+    X_left_wheel = np.hstack(
+        (x_left_wheel_right, x_left_wheel_left, x_left_wheel_straight))
+    Y_left_wheel = np.hstack(
+        (y_left_wheel_right, y_left_wheel_left, y_left_wheel_straight))
+
+    X_center = np.hstack(
+        (x_center_right, x_center_left, x_center_straight))
+    Y_center = np.hstack(
+        (y_center_right, y_center_left, y_center_straight))
+    finalPlot('Final Pose plot',
+              'Final Pose plot.pdf',
+              X_left_wheel, Y_left_wheel,
+              X_center, Y_center,
+              X_right_wheel, Y_right_wheel)
 
 
 def main():
@@ -175,9 +210,10 @@ def main():
     Y_right_wheel_straight = readData('straightWheelPositions.txt')[3][36:].split(',')
     Y_right_wheel_straight_new = typeConverter(Y_right_wheel_straight, float)
 
-    finalPoseEstimation('straight', X_left_wheel_straight_new, Y_left_wheel_straight_new,
-                        X_right_wheel_straight_new, Y_right_wheel_straight_new)
-
+    x_final_pose_straight, y_final_pose_straight = finalPoseEstimation('straight', X_left_wheel_straight_new,
+                                                                       Y_left_wheel_straight_new,
+                                                                       X_right_wheel_straight_new,
+                                                                       Y_right_wheel_straight_new)
     # LEFT MOTION
     X_left_wheel_left = readData('leftWheelPositions.txt')[0][32:].split(',')
     X_left_wheel_left_new = typeConverter(X_left_wheel_left, float)
@@ -191,8 +227,8 @@ def main():
     Y_right_wheel_left = readData('leftWheelPositions.txt')[3][32:].split(',')
     Y_right_wheel_left_new = typeConverter(Y_right_wheel_left, float)
 
-    finalPoseEstimation('left', X_left_wheel_left_new, Y_left_wheel_left_new,
-                        X_right_wheel_left_new, Y_right_wheel_left_new)
+    x_final_pose_left, y_final_pose_left = finalPoseEstimation('left', X_left_wheel_left_new, Y_left_wheel_left_new,
+                                                               X_right_wheel_left_new, Y_right_wheel_left_new)
 
     # RIGHT MOTION
     X_left_wheel_right = readData('rightWheelPositions.txt')[0][33:].split(',')
@@ -207,15 +243,28 @@ def main():
     Y_right_wheel_right = readData('rightWheelPositions.txt')[3][33:].split(',')
     Y_right_wheel_right_new = typeConverter(Y_right_wheel_right, float)
 
-    finalPoseEstimation('right', X_left_wheel_right_new, Y_left_wheel_right_new,
-                        X_right_wheel_right_new, Y_right_wheel_right_new)
+    x_final_pose_right, y_final_pose_right = finalPoseEstimation('right', X_left_wheel_right_new,
+                                                                 Y_left_wheel_right_new,
+                                                                 X_right_wheel_right_new, Y_right_wheel_right_new)
+    finalVisualization(X_left_wheel_right_new,
+                       Y_left_wheel_right_new,
+                       X_left_wheel_left_new,
+                       Y_left_wheel_left_new,
+                       X_left_wheel_straight_new,
+                       Y_left_wheel_straight_new,
+                       X_right_wheel_right_new,
+                       Y_right_wheel_right_new,
+                       X_right_wheel_left_new,
+                       Y_right_wheel_left_new,
+                       X_right_wheel_straight_new,
+                       Y_right_wheel_straight_new,
+                       x_final_pose_right,
+                       y_final_pose_right,
+                       x_final_pose_left,
+                       y_final_pose_left,
+                       x_final_pose_straight,
+                       y_final_pose_straight)
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
