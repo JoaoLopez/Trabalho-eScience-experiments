@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-iteration = np.linspace(0, 20, 20)
+iteration = np.linspace(1, 20, 20)
 iteration = iteration[np.newaxis, :]
 
 
@@ -38,17 +38,43 @@ def plotValues(qty1, qty2, title, xlabel, ylabel, filename):
     :param filename: filename of the resulting plot
     :return: scatter plot
     """
+    plt.figure(figsize=(15, 15))
     plt.scatter(qty1, qty2)
     plt.title(title)
     plt.grid()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.savefig(filename)
-    # plt.scatter(arctan_Values_straight, iteration)
-    # plt.title('Variation of robot heading for Straight motion test')
-    # plt.xlabel('Angle (in°)')
-    # plt.ylabel('Iteration Number')
-    # plt.savefig('Variation of robot heading for Straight motion test.pdf')
+
+
+def finalPlot(finaltitle, filename,
+              x_left, y_left,
+              x_final, y_final,
+              x_right, y_right):
+    """
+    :param finaltitle: title for the plot
+    :param filename: filename for storage
+    :param x_left: x coordinates for left wheel
+    :param y_left: y coordinates for left wheel
+    :param x_final: x coordinates for robot center
+    :param y_final: y coordinates for robot center
+    :param x_right: x coordinates for right wheel
+    :param y_right: y coordinates for right wheel
+    :return: plot depicting the final robot and wheel positions with respect to the robot starting position
+    """
+    plt.figure(figsize=(15, 15))
+    plt.xlim([0, 100])
+    plt.ylim([0, 100])
+    plt.title(finaltitle)
+    plt.scatter(x_left, y_left, c='r', label='left marker')
+    plt.scatter(x_final, y_final, c='b', label='robot location')
+    plt.scatter(x_right, y_right, c='g', label='right marker')
+    plt.plot(31.4, 6.65, 'kx', label='startpoint')
+    plt.xlabel('cms')
+    plt.ylabel('cms')
+    plt.legend()
+    plt.grid()
+    plt.savefig(filename)
 
 
 def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
@@ -70,11 +96,73 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
 
         plotValues(arctan_Values_straight, iteration,
                    'Variation of robot heading for Straight motion test',
-                   'Angle (in°)', 'Iteration Number',
+                   'Angle (in°) of perpendicular to the axle with x axis', 'Iteration Number',
                    'Variation of robot heading for Straight motion test.pdf')
+
+        finalPlot('Final Pose Plot for Straight Motion',
+                  'Final pose plot for Straight Motion.pdf',
+                  x_left_coordinates,
+                  y_left_coordinates,
+                  X_final_pose_straight,
+                  Y_final_pose_straight,
+                  x_right_coordinates,
+                  y_right_coordinates)
+
+    elif pose == 'left':
+        X_final_pose_left = np.divide(x_left_coordinates + x_right_coordinates, 2)
+        Y_final_pose_left = np.divide(y_left_coordinates + y_right_coordinates, 2)
+
+        slope_coordinate_wheel_left = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                             (x_right_coordinates - x_left_coordinates))]
+        arctan_Values_left = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_left))) + np.rad2deg(np.pi / 2)
+
+        plotValues(arctan_Values_left, iteration,
+                   'Variation of robot heading for Left motion test',
+                   'Angle (in°) of perpendicular to the axle with x axis', 'Iteration Number',
+                   'Variation of robot heading for Left motion test.pdf')
+
+        finalPlot('Final Pose Plot for Left Motion',
+                  'Final pose plot for Left Motion.pdf',
+                  x_left_coordinates,
+                  y_left_coordinates,
+                  X_final_pose_left,
+                  Y_final_pose_left,
+                  x_right_coordinates,
+                  y_right_coordinates)
+
+    elif pose == 'right':
+        X_final_pose_right = np.divide(x_left_coordinates + x_right_coordinates, 2)
+        Y_final_pose_right = np.divide(y_left_coordinates + y_right_coordinates, 2)
+
+        slope_coordinate_wheel_right = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                              (x_right_coordinates - x_left_coordinates + 1e-7))]
+
+        arctan_Values_right = np.rad2deg(np.arctan(slope_coordinate_wheel_right))
+
+        for i in range(len(arctan_Values_right)):
+            if arctan_Values_right[i] < 0:
+                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) + np.rad2deg(np.pi/2)
+
+            elif (arctan_Values_right[i]) > 0:
+                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) - np.rad2deg(np.pi/2)
+
+        plotValues(arctan_Values_right, iteration,
+                   'Variation of robot heading for Right motion test',
+                   'Angle (in°) of perpendicular to the axle with x axis', 'Iteration Number',
+                   'Variation of robot heading for Right motion test.pdf')
+
+        finalPlot('Final Pose Plot for Right Motion',
+                  'Final pose plot for Right Motion.pdf',
+                  x_left_coordinates,
+                  y_left_coordinates,
+                  X_final_pose_right,
+                  Y_final_pose_right,
+                  x_right_coordinates,
+                  y_right_coordinates)
 
 
 def main():
+    # STRAIGHT MOTION
     X_left_wheel_straight = readData('straightWheelPositions.txt')[0][36:].split(',')
     X_left_wheel_straight_new = typeConverter(X_left_wheel_straight, float)
 
@@ -89,6 +177,38 @@ def main():
 
     finalPoseEstimation('straight', X_left_wheel_straight_new, Y_left_wheel_straight_new,
                         X_right_wheel_straight_new, Y_right_wheel_straight_new)
+
+    # LEFT MOTION
+    X_left_wheel_left = readData('leftWheelPositions.txt')[0][32:].split(',')
+    X_left_wheel_left_new = typeConverter(X_left_wheel_left, float)
+
+    Y_left_wheel_left = readData('leftWheelPositions.txt')[1][32:].split(',')
+    Y_left_wheel_left_new = typeConverter(Y_left_wheel_left, float)
+
+    X_right_wheel_left = readData('leftWheelPositions.txt')[2][32:].split(',')
+    X_right_wheel_left_new = typeConverter(X_right_wheel_left, float)
+
+    Y_right_wheel_left = readData('leftWheelPositions.txt')[3][32:].split(',')
+    Y_right_wheel_left_new = typeConverter(Y_right_wheel_left, float)
+
+    finalPoseEstimation('left', X_left_wheel_left_new, Y_left_wheel_left_new,
+                        X_right_wheel_left_new, Y_right_wheel_left_new)
+
+    # RIGHT MOTION
+    X_left_wheel_right = readData('rightWheelPositions.txt')[0][33:].split(',')
+    X_left_wheel_right_new = typeConverter(X_left_wheel_right, float)
+
+    Y_left_wheel_right = readData('rightWheelPositions.txt')[1][33:].split(',')
+    Y_left_wheel_right_new = typeConverter(Y_left_wheel_right, float)
+
+    X_right_wheel_right = readData('rightWheelPositions.txt')[2][33:].split(',')
+    X_right_wheel_right_new = typeConverter(X_right_wheel_right, float)
+
+    Y_right_wheel_right = readData('rightWheelPositions.txt')[3][33:].split(',')
+    Y_right_wheel_right_new = typeConverter(Y_right_wheel_right, float)
+
+    finalPoseEstimation('right', X_left_wheel_right_new, Y_left_wheel_right_new,
+                        X_right_wheel_right_new, Y_right_wheel_right_new)
 
 
 if __name__ == '__main__':
