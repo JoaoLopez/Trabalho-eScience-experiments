@@ -4,7 +4,7 @@ This repo contains the code files for the [Scientific Experimentation and Evalua
 Two experiments have been included namely: <br>
 (i) Robot movement <br> 
 20 trial runs each for 3 scenarios (straight, left turn and right turn) <br> 
-initial and final position of the robot left wheel, right wheel and center are noted in the csv files [Readings_robot_motion](src/Readings_robot_motion/)
+final position of the robot left wheel, right wheel and center are noted in the csv files [Readings_robot_motion](src/Readings_robot_motion/)
 <br>
 <br> 
 (ii) Youbot visualization <br> 
