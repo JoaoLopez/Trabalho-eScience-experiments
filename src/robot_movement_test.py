@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 import math
 import os
 
+path = "out/"
+
 iteration = np.linspace(1, 20, 20)
 iteration = iteration[np.newaxis, :]
 
-
+#NÃO É DETERMINÍSTICA PORQUE LÊ DADOS DE UM ARQUIVO EXTERNO (open(filename))
 def readData(filename):
     """
     :param filename: file from which the data is to be input
@@ -18,7 +20,8 @@ def readData(filename):
         content = [x.strip() for x in content]
         return content
 
-
+#É DETERMINÍSTICA (SÓ É NECESSÁRIO VERIFICAR SE OCORRERÃO PROBLEMAS PELO RETORNO UTILIZAR
+#FUNÇÕES DO MÓDULO NUMPY)
 def typeConverter(data, desiredType):
     """
     :param data: data to be converted
@@ -28,7 +31,7 @@ def typeConverter(data, desiredType):
     newList = [desiredType(x) for x in data]
     return np.asarray(newList)
 
-
+#NÃO É DETERMINÍSTICA PORQUE GERA UM GRÁFICO E O SALVA (plt.savefig)
 def plotValues(qty1, qty2, title, xlabel, ylabel, filename):
     """
     :param qty1: x value
@@ -49,7 +52,7 @@ def plotValues(qty1, qty2, title, xlabel, ylabel, filename):
 
     plt.savefig(path + filename)
 
-
+#NÃO É DETERMINÍSTICA PORQUE GERA UM GRÁFICO E O SALVA (plt.savefig)
 def finalPlot(finaltitle, filename,
               x_left, y_left,
               x_final, y_final,
@@ -80,7 +83,7 @@ def finalPlot(finaltitle, filename,
     # path = desired path
     plt.savefig(path + filename)
 
-
+#NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICAS (plotValues)
 def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
     """
     :param pose: straight, left or right
@@ -168,7 +171,7 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
                   y_right_coordinates)
         return X_final_pose_right, Y_final_pose_right
 
-
+#NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICAS (finalPlot)
 def finalVisualization(x_left_wheel_right, y_left_wheel_right, x_left_wheel_left, y_left_wheel_left,
                        x_left_wheel_straight, y_left_wheel_straight,
                        x_right_wheel_right, y_right_wheel_right, x_right_wheel_left, y_right_wheel_left,
@@ -195,7 +198,7 @@ def finalVisualization(x_left_wheel_right, y_left_wheel_right, x_left_wheel_left
               X_center, Y_center,
               X_right_wheel, Y_right_wheel)
 
-
+#NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICA(finalPoseEstimation)
 def main():
     # STRAIGHT MOTION
     X_left_wheel_straight = readData('Readings_robot_motion/straightWheelPositions.csv')[0][36:].split(',')
