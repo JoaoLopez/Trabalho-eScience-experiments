@@ -10,7 +10,8 @@ variables = ['x', 'y', 'theta']
 n_samples = 20
 data = {}
 
-
+#NÃO É DETERMINÍSTICA PORQUE UTILIZA VARIÁVEIS GLOBAIS (sizes)
+#LÊ ARQUIVOS EXTERNOS E GERA GRÁFICOS
 def processing():
     for size in sizes:
         data[size] = {}
@@ -61,7 +62,7 @@ def processing():
         plt.grid()
     plt.savefig('Brick Manipulation Task.pdf')
 
-
+#É DETERMINÍSTICA
 def PCA(dataInp):
     """
     :param dataInp: input for PCA
@@ -72,7 +73,7 @@ def PCA(dataInp):
     eig_vals, eig_vecs = np.linalg.eigh(data_cov)
     return data_dev.dot(eig_vecs[:, -1::-1])
 
-
+#É DETERMINÍSTICA
 def detect_outliers(dataInput, a, b):
     """
     :param dataInput: input for processing
@@ -88,7 +89,7 @@ def detect_outliers(dataInput, a, b):
             inliers.append(i)
     return np.array(outliers), np.array(inliers)
 
-
+#NÃO É DETERMINÍSTICA PORQUE CRIA UM GRÁFICO (plt.figure())
 def manipulationTestPCA():
     graph_scale = 1.5
     parameter = 1.8
@@ -99,7 +100,8 @@ def manipulationTestPCA():
     for i, mode in enumerate(modes):
         plt.subplot(3, 1, i + 1)
         plt.title(mode.upper() + ' Manipulation Test - PCA')
-
+        
+        #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
         data_xy = [[], []]
         for size in sizes:
             data_xy[0].extend(data[size][mode]['x'])
@@ -128,7 +130,7 @@ def manipulationTestPCA():
 
     plt.savefig('Brick Manipulation Task-PCA.pdf')
 
-
+#NÃO É DETERMINÍSTICA PORQUE CRIA UM GRÁFICO (plt.figure())
 def manipulationTestPCAwithoutOutliers():
     graph_scale = 1.5
     parameter = 1.8
@@ -140,6 +142,7 @@ def manipulationTestPCAwithoutOutliers():
         plt.subplot(3, 1, i + 1)
         plt.title(mode.upper() + ' Manipulation Test - PCA')
 
+        #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
         data_xy = [[], []]
         for size in sizes:
             data_xy[0].extend(data[size][mode]['x'])
@@ -171,7 +174,7 @@ def manipulationTestPCAwithoutOutliers():
 
     plt.savefig('Brick Manipulation Task-PCA-without outliers.pdf')
 
-
+#PARECE SER DETERMINÍSTICA(NECESSÁRIO TESTAR)
 def get_chi_squared(mu, sigma, dataInp, samples, N_bins):
     """
     :param mu: mean
@@ -201,7 +204,7 @@ def get_chi_squared(mu, sigma, dataInp, samples, N_bins):
 
     return chi
 
-
+#NÃO É DETERMINÍSTICA PORQUE CRIA UM GRÁFICO (plt.figure())
 def chiTest():
     N_bins = 4
     graph_scale = 1.3
@@ -209,6 +212,7 @@ def chiTest():
     plt.figure(figsize=(12 * graph_scale, 15 * graph_scale))
 
     for i, mode in enumerate(modes):
+        #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
         data_xy = [[], []]
         for size in sizes:
             data_xy[0].extend(data[size][mode]['x'])
@@ -239,7 +243,7 @@ def chiTest():
 
     plt.savefig('Chi squared test.pdf')
 
-
+#NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICAS (processing)
 def main():
     processing()
     manipulationTestPCA()
