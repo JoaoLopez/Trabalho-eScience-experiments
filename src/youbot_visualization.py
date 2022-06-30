@@ -3,6 +3,7 @@ import csv
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
+from intpy.intpy import initialize_intpy, deterministic
 
 sizes = ['small', 'medium', 'large']
 modes = ['right', 'left', 'straight']
@@ -14,6 +15,7 @@ data = {}
 #LÊ ARQUIVOS EXTERNOS E GERA GRÁFICOS
 def processing():
     for size in sizes:
+        global data
         data[size] = {}
         for mode in modes:
             data[size][mode] = {variables[0]: [],
@@ -31,9 +33,16 @@ def processing():
 
                 csvFile.close()
 
-                for i, variable in enumerate(variables):
-                    temp_array = np.array(temp_list[1:], dtype=float)[:, i]
-                    data[size][mode][variable].append(np.mean(temp_array))
+########################ESSA PARTE É DETERMINÍSTICA
+                @deterministic
+                def f1(variables, temp_list, data, size, mode):
+                    for i, variable in enumerate(variables):
+                        temp_array = np.array(temp_list[1:], dtype=float)[:, i]
+                        temp = data[size][mode][variable]
+                        temp.append(np.mean(temp_array))
+                    return data
+                data = f1(variables, temp_list, data, size, mode)
+###########################################################
 
     graph_scale = 0.5
     arrow_scale = 0.02
@@ -63,6 +72,7 @@ def processing():
     plt.savefig('Brick Manipulation Task.pdf')
 
 #É DETERMINÍSTICA
+@deterministic
 def PCA(dataInp):
     """
     :param dataInp: input for PCA
@@ -74,6 +84,7 @@ def PCA(dataInp):
     return data_dev.dot(eig_vecs[:, -1::-1])
 
 #É DETERMINÍSTICA
+@deterministic
 def detect_outliers(dataInput, a, b):
     """
     :param dataInput: input for processing
@@ -101,16 +112,23 @@ def manipulationTestPCA():
         plt.subplot(3, 1, i + 1)
         plt.title(mode.upper() + ' Manipulation Test - PCA')
         
-        #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
-        data_xy = [[], []]
-        for size in sizes:
-            data_xy[0].extend(data[size][mode]['x'])
-            data_xy[1].extend(data[size][mode]['y'])
+##################ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
+        @deterministic
+        def f2(sizes, data, mode, parameter):
+            data_xy = [[], []]
+            for size in sizes:
+                temp = data_xy[0]
+                temp.extend(data[size][mode]['x'])
+                temp = data_xy[1]
+                temp.extend(data[size][mode]['y'])
 
-        pca_data = PCA(np.array(data_xy).T)
-        a = parameter * np.std(pca_data, axis=0)
-        b = np.mean(pca_data, axis=0)
-        t = np.linspace(0, 2 * np.pi, 100)
+            pca_data = PCA(np.array(data_xy).T)
+            a = parameter * np.std(pca_data, axis=0)
+            b = np.mean(pca_data, axis=0)
+            t = np.linspace(0, 2 * np.pi, 100)
+            return pca_data, a, b, t
+        pca_data, a, b, t = f2(sizes, data, mode, parameter)
+#####################################################################
 
         plt.xlim(-0.025, 0.025)
         plt.ylim(-0.015, 0.015)
@@ -142,19 +160,25 @@ def manipulationTestPCAwithoutOutliers():
         plt.subplot(3, 1, i + 1)
         plt.title(mode.upper() + ' Manipulation Test - PCA')
 
-        #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
-        data_xy = [[], []]
-        for size in sizes:
-            data_xy[0].extend(data[size][mode]['x'])
-            data_xy[1].extend(data[size][mode]['y'])
+##################ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
+        @deterministic
+        def f3(sizes, mode, data, goals, parameter):
+            data_xy = [[], []]
+            for size in sizes:
+                temp = data_xy[1]
+                temp.extend(data[size][mode]['y'])
+                temp = data_xy[0]
+                temp.extend(data[size][mode]['x'])
 
-        data_xy = np.array(data_xy).T
-        goal = goals[i] - np.average(data_xy, 0)
-        pca_data = PCA(data_xy)
-        a = parameter * np.std(pca_data, axis=0)
-        b = np.mean(pca_data, axis=0)
-        t = np.linspace(0, 2 * np.pi, 100)
-
+            data_xy = np.array(data_xy).T
+            goal = goals[i] - np.average(data_xy, 0)
+            pca_data = PCA(data_xy)
+            a = parameter * np.std(pca_data, axis=0)
+            b = np.mean(pca_data, axis=0)
+            t = np.linspace(0, 2 * np.pi, 100)
+            return goal, pca_data, a, b, t
+        goal, pca_data, a, b, t = f3(sizes, mode, data, goals, parameter)
+########################################################
         plt.xlim(-0.025, 0.025)
         plt.ylim(-0.015, 0.015)
         plt.xticks(np.arange(-0.025, 0.03, 0.005))
@@ -175,6 +199,7 @@ def manipulationTestPCAwithoutOutliers():
     plt.savefig('Brick Manipulation Task-PCA-without outliers.pdf')
 
 #PARECE SER DETERMINÍSTICA(NECESSÁRIO TESTAR)
+@deterministic
 def get_chi_squared(mu, sigma, dataInp, samples, N_bins):
     """
     :param mu: mean
@@ -213,21 +238,28 @@ def chiTest():
 
     for i, mode in enumerate(modes):
         #ESSE PROCESSAMENTO PODERIA SER COLOCADO EM UMA FUNÇÃO DETERMINÍSTICA
-        data_xy = [[], []]
-        for size in sizes:
-            data_xy[0].extend(data[size][mode]['x'])
-            data_xy[1].extend(data[size][mode]['y'])
+        @deterministic
+        def f4(sizes, data, mode, N_samples):
+            data_xy = [[], []]
+            for size in sizes:
+                temp = data_xy[0]
+                temp.extend(data[size][mode]['x'])
+                temp = data_xy[1]
+                temp.extend(data[size][mode]['y'])
 
-        data_xy = np.array(data_xy).T
-        pca_data = PCA(data_xy)
-        pca_data = np.sort(pca_data, axis=0)
-        mu = np.mean(pca_data, axis=0)
-        sigma = np.std(pca_data, axis=0)
-        samples = np.linspace(mu - 3 * sigma, mu + 3 * sigma, N_samples)
+            data_xy = np.array(data_xy).T
+            pca_data = PCA(data_xy)
+            pca_data = np.sort(pca_data, axis=0)
+            mu = np.mean(pca_data, axis=0)
+            sigma = np.std(pca_data, axis=0)
+            samples = np.linspace(mu - 3 * sigma, mu + 3 * sigma, N_samples)
+            return pca_data, mu, sigma, samples
+        pca_data, mu, sigma, samples = f4(sizes, data, mode, N_samples)
 
         plt.subplot(3, 2, i * 2 + 1)
         chi = get_chi_squared(mu[0], sigma[0], pca_data[:, 0], samples[:, 0], N_bins)
-        plt.title((mode.upper() + ' Manipulation Test - X PDF [chi-squared = {0:.3f}]').format(chi))
+        temp = mode.upper() + ' Manipulation Test - X PDF [chi-squared = {0:.3f}]'
+        plt.title((temp).format(chi))
         plt.plot(samples[:, 0], stats.norm.pdf(samples[:, 0], mu[0], sigma[0]))
         plt.hist(pca_data[:, 0], bins=N_bins, density=1)
         plt.xlabel('X (cm)')
@@ -235,7 +267,8 @@ def chiTest():
 
         plt.subplot(3, 2, i * 2 + 2)
         chi = get_chi_squared(mu[1], sigma[1], pca_data[:, 1], samples[:, 1], N_bins)
-        plt.title((mode.upper() + ' Manipulation Test - Y PDF [chi-squared = {0:.3f}]').format(chi))
+        temp = mode.upper() + ' Manipulation Test - Y PDF [chi-squared = {0:.3f}]'
+        plt.title((temp).format(chi))
         plt.plot(samples[:, 1], stats.norm.pdf(samples[:, 1], mu[1], sigma[1]))
         plt.hist(pca_data[:, 1], bins=N_bins, density=1)
         plt.xlabel('Y (cm)')
@@ -244,6 +277,7 @@ def chiTest():
     plt.savefig('Chi squared test.pdf')
 
 #NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICAS (processing)
+@initialize_intpy(__file__)
 def main():
     processing()
     manipulationTestPCA()
