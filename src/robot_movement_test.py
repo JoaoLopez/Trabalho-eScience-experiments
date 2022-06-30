@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import math
 import os
 
+from intpy.intpy import initialize_intpy, deterministic
+
 path = "out/"
 
 iteration = np.linspace(1, 20, 20)
@@ -22,6 +24,7 @@ def readData(filename):
 
 #É DETERMINÍSTICA (SÓ É NECESSÁRIO VERIFICAR SE OCORRERÃO PROBLEMAS PELO RETORNO UTILIZAR
 #FUNÇÕES DO MÓDULO NUMPY)
+@deterministic
 def typeConverter(data, desiredType):
     """
     :param data: data to be converted
@@ -94,13 +97,19 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
     :return: coordinate estimate for the final pose
     """
     if pose == 'straight':
-        X_final_pose_straight = np.divide(x_left_coordinates + x_right_coordinates, 2)
-        Y_final_pose_straight = np.divide(y_left_coordinates + y_right_coordinates, 2)
+###############################ESSA PARTE DETERMINÍSTICA
+        @deterministic
+        def f1(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
+            X_final_pose_straight = np.divide(x_left_coordinates + x_right_coordinates, 2)
+            Y_final_pose_straight = np.divide(y_left_coordinates + y_right_coordinates, 2)
 
-        slope_coordinate_wheel_straight = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
-                                                                 (x_right_coordinates - x_left_coordinates))]
+            slope_coordinate_wheel_straight = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                                    (x_right_coordinates - x_left_coordinates))]
 
-        arctan_Values_straight = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_straight))) + np.rad2deg(np.pi / 2)
+            arctan_Values_straight = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_straight))) + np.rad2deg(np.pi / 2)
+            return X_final_pose_straight, Y_final_pose_straight, arctan_Values_straight
+        X_final_pose_straight, Y_final_pose_straight, arctan_Values_straight = f1(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates)
+#############################################################
 
         plotValues(arctan_Values_straight, iteration,
                    'Variation of robot heading for Straight motion test',
@@ -118,12 +127,18 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
         return X_final_pose_straight, Y_final_pose_straight
 
     elif pose == 'left':
-        X_final_pose_left = np.divide(x_left_coordinates + x_right_coordinates, 2)
-        Y_final_pose_left = np.divide(y_left_coordinates + y_right_coordinates, 2)
+###############################ESSA PARTE DETERMINÍSTICA
+        @deterministic
+        def f2(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
+            X_final_pose_left = np.divide(x_left_coordinates + x_right_coordinates, 2)
+            Y_final_pose_left = np.divide(y_left_coordinates + y_right_coordinates, 2)
 
-        slope_coordinate_wheel_left = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
-                                                             (x_right_coordinates - x_left_coordinates))]
-        arctan_Values_left = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_left))) + np.rad2deg(np.pi / 2)
+            slope_coordinate_wheel_left = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                                (x_right_coordinates - x_left_coordinates))]
+            arctan_Values_left = abs(np.rad2deg(np.arctan(slope_coordinate_wheel_left))) + np.rad2deg(np.pi / 2)
+            return X_final_pose_left, Y_final_pose_left, arctan_Values_left
+        X_final_pose_left, Y_final_pose_left, arctan_Values_left = f2(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates)
+#######################################
 
         plotValues(arctan_Values_left, iteration,
                    'Variation of robot heading for Left motion test',
@@ -141,20 +156,26 @@ def finalPoseEstimation(pose, x_left_coordinates, y_left_coordinates, x_right_co
         return X_final_pose_left, Y_final_pose_left
 
     elif pose == 'right':
-        X_final_pose_right = np.divide(x_left_coordinates + x_right_coordinates, 2)
-        Y_final_pose_right = np.divide(y_left_coordinates + y_right_coordinates, 2)
+###############################ESSA PARTE DETERMINÍSTICA
+        @deterministic
+        def f3(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates):
+            X_final_pose_right = np.divide(x_left_coordinates + x_right_coordinates, 2)
+            Y_final_pose_right = np.divide(y_left_coordinates + y_right_coordinates, 2)
 
-        slope_coordinate_wheel_right = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
-                                                              (x_right_coordinates - x_left_coordinates + 1e-7))]
+            slope_coordinate_wheel_right = [x / y for x, y in zip((y_right_coordinates - y_left_coordinates),
+                                                                (x_right_coordinates - x_left_coordinates + 1e-7))]
 
-        arctan_Values_right = np.rad2deg(np.arctan(slope_coordinate_wheel_right))
+            arctan_Values_right = np.rad2deg(np.arctan(slope_coordinate_wheel_right))
 
-        for i in range(len(arctan_Values_right)):
-            if arctan_Values_right[i] < 0:
-                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) + np.rad2deg(np.pi / 2)
+            for i in range(len(arctan_Values_right)):
+                if arctan_Values_right[i] < 0:
+                    arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) + np.rad2deg(np.pi / 2)
 
-            elif (arctan_Values_right[i]) > 0:
-                arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) - np.rad2deg(np.pi / 2)
+                elif (arctan_Values_right[i]) > 0:
+                    arctan_Values_right[i] = np.rad2deg(np.arctan(slope_coordinate_wheel_right[i])) - np.rad2deg(np.pi / 2)
+            return X_final_pose_right, Y_final_pose_right, arctan_Values_right
+        X_final_pose_right, Y_final_pose_right, arctan_Values_right = f3(x_left_coordinates, y_left_coordinates, x_right_coordinates, y_right_coordinates)
+################################################
 
         plotValues(arctan_Values_right, iteration,
                    'Variation of robot heading for Right motion test',
@@ -178,20 +199,36 @@ def finalVisualization(x_left_wheel_right, y_left_wheel_right, x_left_wheel_left
                        x_right_wheel_straight, y_right_wheel_straight,
                        x_center_right, y_center_right, x_center_left, y_center_left,
                        x_center_straight, y_center_straight):
-    X_right_wheel = np.hstack(
-        (x_right_wheel_right, x_right_wheel_left, x_right_wheel_straight))
-    Y_right_wheel = np.hstack(
-        (y_right_wheel_right, y_right_wheel_left, y_right_wheel_straight))
+#####################ESSA PARTE É DETERMINÍSTICA
+    @deterministic
+    def f4(x_right_wheel_right, x_right_wheel_left, x_right_wheel_straight,
+           y_right_wheel_right, y_right_wheel_left, y_right_wheel_straight,
+           x_left_wheel_right, x_left_wheel_left, x_left_wheel_straight,
+           y_left_wheel_right, y_left_wheel_left, y_left_wheel_straight,
+           x_center_right, x_center_left, x_center_straight,
+           y_center_right, y_center_left, y_center_straight):
+        X_right_wheel = np.hstack(
+            (x_right_wheel_right, x_right_wheel_left, x_right_wheel_straight))
+        Y_right_wheel = np.hstack(
+            (y_right_wheel_right, y_right_wheel_left, y_right_wheel_straight))
 
-    X_left_wheel = np.hstack(
-        (x_left_wheel_right, x_left_wheel_left, x_left_wheel_straight))
-    Y_left_wheel = np.hstack(
-        (y_left_wheel_right, y_left_wheel_left, y_left_wheel_straight))
+        X_left_wheel = np.hstack(
+            (x_left_wheel_right, x_left_wheel_left, x_left_wheel_straight))
+        Y_left_wheel = np.hstack(
+            (y_left_wheel_right, y_left_wheel_left, y_left_wheel_straight))
 
-    X_center = np.hstack(
-        (x_center_right, x_center_left, x_center_straight))
-    Y_center = np.hstack(
-        (y_center_right, y_center_left, y_center_straight))
+        X_center = np.hstack(
+            (x_center_right, x_center_left, x_center_straight))
+        Y_center = np.hstack(
+            (y_center_right, y_center_left, y_center_straight))
+        return X_right_wheel, Y_right_wheel, X_left_wheel, Y_left_wheel, X_center, Y_center
+    X_right_wheel, Y_right_wheel, X_left_wheel, Y_left_wheel, X_center, Y_center = f4(x_right_wheel_right, x_right_wheel_left, x_right_wheel_straight,
+                                                                                      y_right_wheel_right, y_right_wheel_left, y_right_wheel_straight,
+                                                                                      x_left_wheel_right, x_left_wheel_left, x_left_wheel_straight,
+                                                                                      y_left_wheel_right, y_left_wheel_left, y_left_wheel_straight,
+                                                                                      x_center_right, x_center_left, x_center_straight,
+                                                                                      y_center_right, y_center_left, y_center_straight)
+############################################
     finalPlot('Final Pose plot',
               'Final Pose plot.pdf',
               X_left_wheel, Y_left_wheel,
@@ -199,18 +236,23 @@ def finalVisualization(x_left_wheel_right, y_left_wheel_right, x_left_wheel_left
               X_right_wheel, Y_right_wheel)
 
 #NÃO É DETERMINÍSTICA PORQUE CHAMA FUNÇÕES NÃO DETERMINÍSTICA(finalPoseEstimation)
+@initialize_intpy(__file__)
 def main():
     # STRAIGHT MOTION
-    X_left_wheel_straight = readData('Readings_robot_motion/straightWheelPositions.csv')[0][36:].split(',')
+    temp = readData('Readings_robot_motion/straightWheelPositions.csv')[0][36:]
+    X_left_wheel_straight = temp.split(',')
     X_left_wheel_straight_new = typeConverter(X_left_wheel_straight, float)
 
-    Y_left_wheel_straight = readData('Readings_robot_motion/straightWheelPositions.csv')[1][36:].split(',')
+    temp = readData('Readings_robot_motion/straightWheelPositions.csv')[1][36:]
+    Y_left_wheel_straight = temp.split(',')
     Y_left_wheel_straight_new = typeConverter(Y_left_wheel_straight, float)
 
-    X_right_wheel_straight = readData('Readings_robot_motion/straightWheelPositions.csv')[2][36:].split(',')
+    temp = readData('Readings_robot_motion/straightWheelPositions.csv')[2][36:]
+    X_right_wheel_straight = temp.split(',')
     X_right_wheel_straight_new = typeConverter(X_right_wheel_straight, float)
 
-    Y_right_wheel_straight = readData('Readings_robot_motion/straightWheelPositions.csv')[3][36:].split(',')
+    temp = readData('Readings_robot_motion/straightWheelPositions.csv')[3][36:]
+    Y_right_wheel_straight = temp.split(',')
     Y_right_wheel_straight_new = typeConverter(Y_right_wheel_straight, float)
 
     x_final_pose_straight, y_final_pose_straight = finalPoseEstimation('straight', X_left_wheel_straight_new,
@@ -218,32 +260,40 @@ def main():
                                                                        X_right_wheel_straight_new,
                                                                        Y_right_wheel_straight_new)
     # LEFT MOTION
-    X_left_wheel_left = readData('Readings_robot_motion/leftWheelPositions.csv')[0][32:].split(',')
+    temp = readData('Readings_robot_motion/leftWheelPositions.csv')[0][32:]
+    X_left_wheel_left = temp.split(',')
     X_left_wheel_left_new = typeConverter(X_left_wheel_left, float)
 
-    Y_left_wheel_left = readData('Readings_robot_motion/leftWheelPositions.csv')[1][32:].split(',')
+    temp = readData('Readings_robot_motion/leftWheelPositions.csv')[1][32:]
+    Y_left_wheel_left = temp.split(',')
     Y_left_wheel_left_new = typeConverter(Y_left_wheel_left, float)
 
-    X_right_wheel_left = readData('Readings_robot_motion/leftWheelPositions.csv')[2][32:].split(',')
+    temp = readData('Readings_robot_motion/leftWheelPositions.csv')[2][32:]
+    X_right_wheel_left = temp.split(',')
     X_right_wheel_left_new = typeConverter(X_right_wheel_left, float)
 
-    Y_right_wheel_left = readData('Readings_robot_motion/leftWheelPositions.csv')[3][32:].split(',')
+    temp = readData('Readings_robot_motion/leftWheelPositions.csv')[3][32:]
+    Y_right_wheel_left = temp.split(',')
     Y_right_wheel_left_new = typeConverter(Y_right_wheel_left, float)
 
     x_final_pose_left, y_final_pose_left = finalPoseEstimation('left', X_left_wheel_left_new, Y_left_wheel_left_new,
                                                                X_right_wheel_left_new, Y_right_wheel_left_new)
 
     # RIGHT MOTION
-    X_left_wheel_right = readData('Readings_robot_motion/rightWheelPositions.csv')[0][33:].split(',')
+    temp = readData('Readings_robot_motion/rightWheelPositions.csv')[0][33:]
+    X_left_wheel_right = temp.split(',')
     X_left_wheel_right_new = typeConverter(X_left_wheel_right, float)
 
-    Y_left_wheel_right = readData('Readings_robot_motion/rightWheelPositions.csv')[1][33:].split(',')
+    temp = readData('Readings_robot_motion/rightWheelPositions.csv')[1][33:]
+    Y_left_wheel_right = temp.split(',')
     Y_left_wheel_right_new = typeConverter(Y_left_wheel_right, float)
 
-    X_right_wheel_right = readData('Readings_robot_motion/rightWheelPositions.csv')[2][33:].split(',')
+    temp = readData('Readings_robot_motion/rightWheelPositions.csv')[2][33:]
+    X_right_wheel_right = temp.split(',')
     X_right_wheel_right_new = typeConverter(X_right_wheel_right, float)
 
-    Y_right_wheel_right = readData('Readings_robot_motion/rightWheelPositions.csv')[3][33:].split(',')
+    temp = readData('Readings_robot_motion/rightWheelPositions.csv')[3][33:]
+    Y_right_wheel_right = temp.split(',')
     Y_right_wheel_right_new = typeConverter(Y_right_wheel_right, float)
 
     x_final_pose_right, y_final_pose_right = finalPoseEstimation('right', X_left_wheel_right_new,
@@ -270,4 +320,7 @@ def main():
 
 
 if __name__ == '__main__':
+    import time
+    start = time.perf_counter()
     main()
+    print(time.perf_counter()-start)
